@@ -4,19 +4,26 @@ import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'] })
 
+type Course = {
+  id: number
+  title: string
+  content: string
+}
+
 const Page = () => {
-  const div = useRef<HTMLDivElement>(null)
+  const divRef = useRef<HTMLDivElement>(null)
   const [content, setContent] = useState<string>('')
   const [wordCount, setWordCount] = useState<number>(0)
   const [isFirstLetterColored, setIsFirstLetterColored] = useState<boolean>(false)
   const [isRemainingLettersHidden, setIsRemainingLettersHidden] = useState<boolean>(false)
-  const [selectedCourse, setSelectedCourse] = useState<string>('')
-  const [courses, setCourses] = useState<any[]>([])
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [courses, setCourses] = useState<Course[]>([])
   const [newCourseTitle, setNewCourseTitle] = useState<string>('')
   const [newCourseContent, setNewCourseContent] = useState<string>('')
 
+  console.log(content)
   // Function to save courses to localStorage
-  const saveCoursesToLocalStorage = (courses: any[]) => {
+  const saveCoursesToLocalStorage = (courses: Course[]) => {
     localStorage.setItem('courses', JSON.stringify(courses))
   }
 
@@ -30,14 +37,14 @@ const Page = () => {
 
   // Function to update content and word count
   const updateContent = () => {
-    if (div.current) {
-      const newContent = div.current.innerText
+    if (divRef.current) {
+      const newContent = divRef.current.innerText
       setContent(newContent)
       setWordCount(newContent.trim().split(/\s+/).length)
 
       // Update content of selected course
       const updatedCourses = courses.map((course) =>
-        course.title === selectedCourse ? { ...course, content: newContent } : course
+        course.title === selectedCourse?.title ? { ...course, content: newContent } : course
       )
       setCourses(updatedCourses)
 
@@ -47,11 +54,11 @@ const Page = () => {
   }
 
   // Handle course selection
-  const handleCourseSelect = (course: any) => {
-    setSelectedCourse(course.title)
+  const handleCourseSelect = (course: Course) => {
+    setSelectedCourse(course)
     setContent(course.content)
-    if (div.current) {
-      div.current.innerText = course.content
+    if (divRef.current) {
+      divRef.current.innerText = course.content
     }
   }
 
@@ -73,11 +80,11 @@ const Page = () => {
 
   // Toggle first letter color
   const toggleFirstLetterColor = () => {
-    if (div.current) {
-      const contentText = div.current.innerText.trim()
+    if (divRef.current) {
+      const contentText = divRef.current.innerText.trim()
 
       if (isFirstLetterColored) {
-        div.current.innerHTML = contentText
+        divRef.current.innerHTML = contentText
         setIsFirstLetterColored(false)
       } else {
         const highlighted = contentText
@@ -89,7 +96,7 @@ const Page = () => {
             return word
           })
           .join(' ')
-        div.current.innerHTML = highlighted
+        divRef.current.innerHTML = highlighted
         setIsFirstLetterColored(true)
       }
     }
@@ -97,8 +104,8 @@ const Page = () => {
 
   // Toggle hiding remaining letters
   const toggleRemainingLettersOpacity = () => {
-    if (div.current) {
-      const contentText = div.current.innerText.trim()
+    if (divRef.current) {
+      const contentText = divRef.current.innerText.trim()
 
       if (isRemainingLettersHidden) {
         const visibleText = contentText
@@ -111,7 +118,7 @@ const Page = () => {
             }
           })
           .join(' ')
-        div.current.innerHTML = visibleText
+        divRef.current.innerHTML = visibleText
         setIsRemainingLettersHidden(false)
       } else {
         const modified = contentText
@@ -124,7 +131,7 @@ const Page = () => {
             }
           })
           .join(' ')
-        div.current.innerHTML = modified
+        divRef.current.innerHTML = modified
         setIsRemainingLettersHidden(true)
       }
     }
@@ -132,12 +139,12 @@ const Page = () => {
 
   // Adding content update listener for real-time tracking
   useEffect(() => {
-    if (div.current) {
-      const handleInput = () => updateContent()
-      div.current.addEventListener('input', handleInput)
-      return () => div.current?.removeEventListener('input', handleInput)
+    const handleInput = () => updateContent()
+    if (divRef.current) {
+      divRef.current.addEventListener('input', handleInput)
     }
-  }, [div.current])
+    return () => divRef.current?.removeEventListener('input', handleInput)
+  }, [divRef.current])
 
   return (
     <div className="flex w-full h-full">
@@ -148,7 +155,7 @@ const Page = () => {
           <button
             key={course.id}
             onClick={() => handleCourseSelect(course)}
-            className={`block w-full p-3 mb-2 text-left rounded bg-gray-200 hover:bg-gray-300 ${selectedCourse === course.title ? 'bg-gray-400' : ''}`}
+            className={`block w-full p-3 mb-2 text-left rounded bg-gray-200 hover:bg-gray-300 ${selectedCourse === course ? 'bg-gray-400' : ''}`}
           >
             {course.title}
           </button>
@@ -179,7 +186,7 @@ const Page = () => {
 
       {/* Main Content Area */}
       <div className="w-3/4 p-10 flex flex-col">
-        <h1 className="text-3xl font-bold underline">{selectedCourse || 'Course Editor'}</h1>
+        <h1 className="text-3xl font-bold underline">{selectedCourse?.title || 'Course Editor'}</h1>
 
         {/* Basic formatting buttons */}
         <div className="mt-4 mb-2 space-x-2">
@@ -195,7 +202,7 @@ const Page = () => {
         <div
           className={`w-full h-full p-5 text-xl font-medium border border-gray-300 ${inter.className}`}
           contentEditable
-          ref={div}
+          ref={divRef}
           style={{ minHeight: '400px', overflowY: 'auto' }}
         />
 
@@ -207,3 +214,4 @@ const Page = () => {
 }
 
 export default Page
+
