@@ -20,7 +20,7 @@ const Page = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [newCourseTitle, setNewCourseTitle] = useState<string>("");
   const [newCourseContent, setNewCourseContent] = useState<string>("");
-
+  console.log(content);
   // Load courses from localStorage on page load
   useEffect(() => {
     const savedCourses = localStorage.getItem("courses");
